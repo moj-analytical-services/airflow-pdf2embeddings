@@ -4,8 +4,8 @@ data/
 models/
 .DS_Store
 **/.DS_Store
-src/__pycache__/
+pdf2embeddings/__pycache__/
 __pycache__
-src/tmp/
+pdf2embeddings/tmp/
 
 
