@@ -1,0 +1,11 @@
+.idea
+venv
+data/
+models/
+.DS_Store
+**/.DS_Store
+src/__pycache__/
+__pycache__
+src/tmp/
+
+
