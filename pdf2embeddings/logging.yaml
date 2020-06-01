@@ -1,0 +1,72 @@
+version: 1
+disable_existing_loggers: true
+
+
+formatters:
+
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+  detailed:
+    format: '%(asctime)s - %(levelname)s - %(name)s.%(funcName)s - %(message)s'
+
+
+handlers:
+
+  console:
+    class: logging.StreamHandler
+    level: WARNING
+    formatter: detailed # simple
+    # stream: ext://sys.stdout  # This prints things normally instead of in red.
+
+  debug_file_handler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: detailed
+    filename: 'tmp/debug.log'
+
+  info_file_handler:
+    class: logging.FileHandler
+    level: INFO
+    formatter: detailed
+    filename: 'tmp/info.log'
+
+  warning_file_handler:
+    class: logging.FileHandler
+    level: WARNING
+    formatter: detailed
+    filename: 'tmp/warning.log'
+
+
+loggers:
+
+  __main__:
+    level: DEBUG
+    handlers: [console, debug_file_handler, info_file_handler, warning_file_handler]
+    propagate: no
+
+  pdf2embeddings.scraper:
+    level: DEBUG
+    handlers: [console, debug_file_handler, info_file_handler, warning_file_handler]
+    propagate: no
+
+  pdf2embeddings.arrange_text:
+    level: DEBUG
+    handlers: [console, debug_file_handler, info_file_handler, warning_file_handler]
+    propagate: no
+
+  pdf2embeddings.embedder:
+    level: DEBUG
+    handlers: [console, debug_file_handler, info_file_handler, warning_file_handler]
+    propagate: no
+
+  pdf2embeddings.process_user_queries:
+    level: DEBUG
+    handlers: [console, debug_file_handler, info_file_handler, warning_file_handler]
+    propagate: no
+
+
+
+root:
+  level: WARNING
+  handlers: [console]
