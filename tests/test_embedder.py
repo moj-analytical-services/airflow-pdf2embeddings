@@ -82,7 +82,7 @@ class TestEmbedder:
         embeddings, _ = embedder.compute_bert_embeddings(model='bert-base-nli-stsb-mean-tokens')
         assert len(list_of_sentences) == len(embeddings)
         assert embeddings.shape == (len(list_of_sentences), 768)
-        np.testing.assert_array_almost_equal(expected_bert_embeddings, embeddings)
+        np.testing.assert_array_almost_equal(expected_bert_embeddings, embeddings, decimal=5)
 
     def test_compute_bert_embeddings_is_empty_sentence(self):
         embedder = Embedder([])
