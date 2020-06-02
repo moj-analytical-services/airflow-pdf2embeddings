@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/moj-analytical-services/airflow-pdf2embeddings/badge.svg?branch=master)](https://coveralls.io/github/moj-analytical-services/airflow-pdf2embeddings?branch=master)
+
 NLP tool for scraping text from a corpus of PDF files, embedding the sentences in the text and finding semantically similar sentences to a given search query
 ====================================================================================================================================================================================
 
