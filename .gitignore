@@ -7,5 +7,7 @@ models/
 pdf2embeddings/__pycache__/
 __pycache__
 pdf2embeddings/tmp/
-
+build/
+dist/
+pdf2embeddings.egg-info/
 
