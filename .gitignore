@@ -1,7 +1,7 @@
 .idea
 venv
-data/
-models/
+#data/
+#models/
 .DS_Store
 **/.DS_Store
 pdf2embeddings/__pycache__/
