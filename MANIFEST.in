@@ -1,6 +1,7 @@
 include LICENSE
 include README.md
-recursive-include pdf2embeddings *
+include pdf2embeddings/logging.yaml
 recursive-include config *.json
 global-exclude .DS_Store
 global-exclude __pycache__
+global-exclude pdf2embeddings/__pycache__
