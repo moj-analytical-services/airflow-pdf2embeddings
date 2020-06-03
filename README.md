@@ -31,6 +31,8 @@ Project Organization
     │
     ├── setup.py           <- Makes project pip installable (pip install -e .) so pdf2embeddings can be imported
     │
+    ├── MANIFEST.in        <- Tells setup.py which package data to include and exclude.
+    │
     ├── config             <- This folders stores configuration files (for example suggested filenames for saving 
     │   │                     specific objects) that are read in by some of the runner scripts. Edit as required.
     │   ├── filenames.json            
