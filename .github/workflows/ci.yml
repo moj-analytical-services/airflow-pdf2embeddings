@@ -1,0 +1,46 @@
+name: ci_master
+
+# This workflow is triggered on push or pull request to master branch only.
+# It is also run on schedule once a week, to regularly check that the environment
+# is working as expected. This is run at 00:00 every Monday.
+on:
+  pull_request:
+    branches:
+      - master
+
+  push:
+    branches:
+      - master
+
+# Defining the jobs to be run. The first job checks all the tests pass. The second job is
+# executed only if the first job passed, and it updates the coverage on coveralls.
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest #, macos-latest]  # running tests on both Linux and MacOs environments
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
+      - name: Run tests with pytest
+        env:
+          PYTHONHASHSEED: 123  # required for deterministic reproducibility of two Word2Vec tests
+        run: |
+          python3 -m pytest
+
+#  update_coveralls:
+#    name: Update coveralls.io
+#    needs: build  # only update coverage on coveralls.io if all tests pass successfully.
+#    runs_on: ubuntu-latest
+
+
