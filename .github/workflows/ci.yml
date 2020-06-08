@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest #, macos-latest]  # running tests on both Linux and MacOs environments
     strategy:
       matrix:
-        python-version: [3.7] #[3.6, 3.7, 3.8]
+        python-version: [3.5] #[3.6, 3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -38,7 +38,7 @@ jobs:
         env:
           PYTHONHASHSEED: 123  # required for deterministic reproducibility of two Word2Vec tests
         run: |
-          python3 -m pytest -v --cov-report term-missing --cov=airflow-pdf2embeddings
+          python3 -m pytest -v --cov-report term-missing --cov=pdf2embeddings
       - name: Upload coverage report to coveralls.io
         if: ${{ matrix.python-version == '3.7' }}
         # only update coverage when running on Python 3.7 (no need to this for all versions)
