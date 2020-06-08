@@ -1,4 +1,4 @@
-name: ci_master
+name: build
 
 # This workflow is triggered on push or pull request to master branch only.
 # It is also run on schedule once a week, to regularly check that the environment
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest #, macos-latest]  # running tests on both Linux and MacOs environments
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7] #[3.6, 3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -32,16 +32,16 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
+          python3 -m pip install pytest-cov coveralls
           echo -e "import nltk\nnltk.download('punkt')" | python3  # it needs punkt in order to work properly (dataset by default not downloaded at main nltk installation)
       - name: Run tests with pytest
         env:
           PYTHONHASHSEED: 123  # required for deterministic reproducibility of two Word2Vec tests
         run: |
-          python3 -m pytest
-
-#  update_coveralls:
-#    name: Update coveralls.io
-#    needs: build  # only update coverage on coveralls.io if all tests pass successfully.
-#    runs_on: ubuntu-latest
-
-
+          python3 -m pytest -v --cov-report term-missing --cov=airflow-pdf2embeddings
+      - name: Upload coverage report to coveralls.io
+        if: ${{ matrix.python-version == '3.7' }}
+        # only update coverage when running on Python 3.7 (no need to this for all versions)
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: coveralls

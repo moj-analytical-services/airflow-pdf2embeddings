@@ -1,4 +1,9 @@
+[![Build Badge](https://github.com/moj-analytical-services/airflow-pdf2embeddings/workflows/build/badge.svg)](https://github.com/moj-analytical-services/airflow-pdf2embeddings/actions)
+[![PyPI version](https://img.shields.io/pypi/v/pdf2embeddings.svg)](https://pypi.org/project/pdf2embeddings/)
+[![Licence](https://img.shields.io/github/license/moj-analytical-services/airflow-pdf2embeddings.svg)](https://github.com/moj-analytical-services/airflow-pdf2embeddings/blob/master/LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/moj-analytical-services/airflow-pdf2embeddings/badge.svg?branch=master)](https://coveralls.io/github/moj-analytical-services/airflow-pdf2embeddings?branch=master)
+
+
 
 NLP tool for scraping text from a corpus of PDF files, embedding the sentences in the text and finding semantically similar sentences to a given search query
 ====================================================================================================================================================================================

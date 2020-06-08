@@ -10,4 +10,5 @@ pdf2embeddings/tmp/
 build/
 dist/
 pdf2embeddings.egg-info/
+.coverage
 
