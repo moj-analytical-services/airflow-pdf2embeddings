@@ -1,4 +1,4 @@
-name: ci_master
+name: build
 
 # This workflow is triggered on push or pull request to master branch only.
 # It is also run on schedule once a week, to regularly check that the environment
@@ -37,11 +37,11 @@ jobs:
         env:
           PYTHONHASHSEED: 123  # required for deterministic reproducibility of two Word2Vec tests
         run: |
-          python3 -m pytest
-
-#  update_coveralls:
-#    name: Update coveralls.io
-#    needs: build  # only update coverage on coveralls.io if all tests pass successfully.
-#    runs_on: ubuntu-latest
-
+          python3 -m pytest -v --cov-report term-missing --cov=airflow-pdf2embeddings
+      - name: Upload coverage report to coveralls.io
+        if: ${{ matrix.python-version == '3.7' }}
+        # only update coverage when running on Python 3.7 (no need to this for all versions)
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: coveralls
 
