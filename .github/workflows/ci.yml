@@ -32,6 +32,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
+          python3 -m pip install pytest-cov coveralls
           echo -e "import nltk\nnltk.download('punkt')" | python3  # it needs punkt in order to work properly (dataset by default not downloaded at main nltk installation)
       - name: Run tests with pytest
         env:
