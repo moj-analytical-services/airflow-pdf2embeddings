@@ -96,10 +96,8 @@ Clone this repository from GitHub, or install this project by running
 ```
 $ pip install pdf2embeddings
 ```
-on the terminal command (or `pip3`, as appropriate). Alternatively, you can install it with conda:
-```
-$ conda install pdf2embeddings
-```
+on the terminal command (or `pip3`, as appropriate).  
+
 If you have cloned it from GitHub, you can run a test to ensure your environment is properly set-up. This project has 
 not been tested on versions of Python older than 3.6, and some versions of the `numpy` library older than 1.17 are also known 
 to cause issues. Please run the following line in your terminal
