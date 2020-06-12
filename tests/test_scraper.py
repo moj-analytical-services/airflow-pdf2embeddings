@@ -1,4 +1,5 @@
 import os
+import logging
 import numpy as np
 import pandas as pd
 from pdf2embeddings.scraper import DocumentScraper
@@ -11,6 +12,15 @@ class TestDocumentScraper:
         )
         assert scraper.pdf_folder == os.getenv("FIXTURES_DIR")
         assert scraper.open_json == text_cleaning_json
+
+    def test_class_instantiation_when_no_text_cleaning_json_provided(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            scraper = DocumentScraper(os.getenv("FIXTURES_DIR"))
+        assert scraper.pdf_folder == os.getenv("FIXTURES_DIR")
+        expected_log_message = \
+            'No .json file for text cleaning was provided. Ad-hoc text cleaning will not be performed.'
+        assert expected_log_message in caplog.text
+        assert scraper.open_json == dict()
 
     def test_document_corpus_to_pandas_df(self):
         expected_scraped_df = pd.DataFrame(
