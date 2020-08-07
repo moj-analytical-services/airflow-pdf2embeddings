@@ -1,3 +1,4 @@
+import s3fs
 import slate3k
 import logging
 from tqdm import tqdm
@@ -50,14 +51,25 @@ class DocumentScraper:
         """
         assert pdf_name.endswith('.pdf'), 'Input file is not in .pdf format. The file cannot be processed.'
         document_series = pd.Series()
-        with open(os.path.join(self.pdf_folder, pdf_name), 'rb') as pdf:
-            pdf_reader = slate3k.PDF(pdf)
-            num_pages = len(pdf_reader)
-            for i, page in enumerate(pdf_reader):
-                logger.debug(f'Reading page {i+1} of PDF file {pdf_name}')
-                page_text = self._clean_text(page)
-                page_series = pd.Series(page_text)
-                document_series = document_series.append(page_series, ignore_index=True)
+        try:
+            pdf = open(os.path.join(self.pdf_folder, pdf_name), 'rb')
+        except FileNotFoundError:  # check if the path corresponds to an S3 bucket
+            try:
+                pdf = s3fs.S3FileSystem().open(os.path.join(self.pdf_folder, pdf_name), 'rb')
+            except FileNotFoundError as err:
+                raise FileNotFoundError(
+                    f"{err}. We also tried to look for an S3 bucket path but could not find any. Other types of cloud "
+                    f"storage are not natively supported by pdf2embeddings."
+                )
+        pdf_reader = slate3k.PDF(pdf)
+        num_pages = len(pdf_reader)
+        for i, page in enumerate(pdf_reader):
+            logger.debug(f'Reading page {i+1} of PDF file {pdf_name}')
+            page_text = self._clean_text(page)
+            page_series = pd.Series(page_text)
+            document_series = document_series.append(page_series, ignore_index=True)
+        pdf.close()
+
         return document_series, num_pages
 
     def _clean_text(self, text: str) -> str:
@@ -92,3 +104,4 @@ class DocumentScraper:
                 series.rename(file.replace('.pdf', ''), inplace=True)
                 df = pd.concat([df, series], axis=1)
         return df
+    
