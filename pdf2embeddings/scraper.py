@@ -28,6 +28,7 @@ class DocumentScraper:
         """
         self.pdf_folder = pdf_folder
         self.open_json = self._read_config(json_filename)
+        self.from_s3_bucket = None
 
     @staticmethod
     def _read_config(json_filename: Optional[str]) -> Dict[str, str]:
@@ -51,16 +52,10 @@ class DocumentScraper:
         """
         assert pdf_name.endswith('.pdf'), 'Input file is not in .pdf format. The file cannot be processed.'
         document_series = pd.Series()
-        try:
+        if self.from_s3_bucket:
             pdf = open(os.path.join(self.pdf_folder, pdf_name), 'rb')
-        except FileNotFoundError:  # check if the path corresponds to an S3 bucket
-            try:
-                pdf = s3fs.S3FileSystem().open(os.path.join(self.pdf_folder, pdf_name), 'rb')
-            except FileNotFoundError as err:
-                raise FileNotFoundError(
-                    f"{err}. We also tried to look for an S3 bucket path but could not find any. Other types of cloud "
-                    f"storage are not natively supported by pdf2embeddings."
-                )
+        if not self.from_s3_bucket:
+            pdf = s3fs.S3FileSystem().open(os.path.join(self.pdf_folder, pdf_name), 'rb')
         pdf_reader = slate3k.PDF(pdf)
         num_pages = len(pdf_reader)
         for i, page in enumerate(pdf_reader):
@@ -88,8 +83,20 @@ class DocumentScraper:
         :return: df: a pd.DataFrame. See class docstring.
         """
         df = pd.DataFrame()
-        pdf_list = [pdf for pdf in os.listdir(self.pdf_folder) if pdf.endswith('.pdf')]  # excluding non .pdf files
-        not_pdf_list = [pdf for pdf in os.listdir(self.pdf_folder) if not pdf.endswith('.pdf')]
+        try:
+            pdf_list = [pdf for pdf in os.listdir(self.pdf_folder) if pdf.endswith('.pdf')]  # excluding non .pdf files
+            not_pdf_list = [pdf for pdf in os.listdir(self.pdf_folder) if not pdf.endswith('.pdf')]
+            self.from_s3_bucket = False
+        except FileNotFoundError:
+            try:
+                pdf_list = [pdf for pdf in s3fs.S3FileSystem().ls(self.pdf_folder) if pdf.endswith('.pdf')]
+                not_pdf_list = [pdf for pdf in s3fs.S3FileSystem().ls(self.pdf_folder) if not pdf.endswith('.pdf')]
+                self.from_s3_bucket = True
+            except FileNotFoundError as err:
+                raise FileNotFoundError(
+                    f"{err}. We also tried to look for an S3 bucket path but could not find any. Other types of cloud "
+                    f"storage are not natively supported by pdf2emb_nlp."
+                )
         if len(not_pdf_list) > 0:
             logger.warning(
                 f'\nThe following files were present in the directory {self.pdf_folder}, but were not scraped as they '
@@ -104,4 +111,3 @@ class DocumentScraper:
                 series.rename(file.replace('.pdf', ''), inplace=True)
                 df = pd.concat([df, series], axis=1)
         return df
-    
