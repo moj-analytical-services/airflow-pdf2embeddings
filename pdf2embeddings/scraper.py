@@ -55,7 +55,7 @@ class DocumentScraper:
         if not self.from_s3_bucket:
             pdf = open(os.path.join(self.pdf_folder, pdf_name), 'rb')
         if self.from_s3_bucket:
-            pdf = s3fs.S3FileSystem().open(os.path.join(self.pdf_folder, pdf_name), 'rb')
+            pdf = s3fs.S3FileSystem().open(pdf_name, 'rb')  # no need to join with self.pdf_folder as s3fs includes that
         pdf_reader = slate3k.PDF(pdf)
         num_pages = len(pdf_reader)
         for i, page in enumerate(pdf_reader):
