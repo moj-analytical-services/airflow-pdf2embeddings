@@ -37,7 +37,11 @@ setup(
         "sentence-transformers==0.2.5.1",
         "slate3k==0.5.3",
         "typing==3.7.4.1",
-        "tqdm==4.45.0"
+        "tqdm==4.45.0",
+        "PyYAML~=5.1.2",
+        "setuptools~=47.1.1",
+        "s3fs~=0.4.2",
+        "sklearn~=0.0"
     ],
     author='moj-analytical-services',
     classifiers=[
