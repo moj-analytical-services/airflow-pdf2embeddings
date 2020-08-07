@@ -52,9 +52,9 @@ class DocumentScraper:
         """
         assert pdf_name.endswith('.pdf'), 'Input file is not in .pdf format. The file cannot be processed.'
         document_series = pd.Series()
-        if self.from_s3_bucket:
-            pdf = open(os.path.join(self.pdf_folder, pdf_name), 'rb')
         if not self.from_s3_bucket:
+            pdf = open(os.path.join(self.pdf_folder, pdf_name), 'rb')
+        if self.from_s3_bucket:
             pdf = s3fs.S3FileSystem().open(os.path.join(self.pdf_folder, pdf_name), 'rb')
         pdf_reader = slate3k.PDF(pdf)
         num_pages = len(pdf_reader)
