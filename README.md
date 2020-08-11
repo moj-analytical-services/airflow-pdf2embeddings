@@ -114,7 +114,9 @@ Each module has been fully documented.
 Before you start, please configure your environment variables according to your own directory path. Please refer to
 the `.envrc` file, where `$PWD` corresponds to the directory path where this repository has been cloned.
 
-In order to scrape the text from a corpus of PDF files, you will need to save your PDFs in the folder (`~/data/raw/pdfs`). 
+In order to scrape the text from a corpus of PDF files, you will need to save your PDFs in the folder (`~/data/raw/pdfs`).  
+Alternatively to scraping files from local storage, this package also supports cloud storage on AWS S3 buckets only 
+(other cloud storage solutions are not natively supported).  
 You can make use of the `data_processing_runner.py` script to scrape the PDFs, clean the text, split all the text into 
 sentences,  and save this into a .csv file. The script imports the two modules `scraper` and `arrange_text`.
 ```python
@@ -145,7 +147,14 @@ if __name__ == "__main__":
     df_by_sentence.to_csv(os.path.join(DATA_DIR, 'processed', 'corpus_by_sentence.csv'), index=False)
 
 ```
-The file `words_to_replace.json` in the `config` folder is used for ad-hoc text cleaning. When running
+The file `words_to_replace.json` in the `config` folder is used for ad-hoc text cleaning.   
+If using an AWS S3 bucket for storing PDFs, please set `from_s3_bucket=True`, so the `scraper` will be
+```python
+scraper = DocumentScraper(pdfs_folder, json_path, from_s3_bucket = True)
+```
+If you choose this option, the `pdfs_folder` can either start with `"s3://"` or omit this prefix. Please ensure you already have the 
+correct credentials for accessing the S3 bucket you are pointing to, and that the path is correct.  
+When running
 `scraper.document_corpus_to_pandas_df()`, the json is deserialised into a python dictionary, and the corpus text will be
 cleaned by replacing each key in this dictionary with its value. In order to modify and customize the content of this
 json file, run the script `pdf2embeddings/json_creator.py` and adapt it as necessary.

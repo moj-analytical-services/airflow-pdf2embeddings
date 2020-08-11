@@ -25,6 +25,7 @@ setup(
     license='MIT',
     install_requires=[
         "allennlp==0.9.0",
+        "boto3~=1.10.34",
         "gensim==3.8.1",
         "nltk==3.4.5",
         "numpy==1.18.2",
@@ -38,10 +39,7 @@ setup(
         "slate3k==0.5.3",
         "typing==3.7.4.1",
         "tqdm==4.45.0",
-        "PyYAML~=5.1.2",
-        "setuptools~=47.1.1",
         "s3fs~=0.4.2",
-        "sklearn~=0.0"
     ],
     author='moj-analytical-services',
     classifiers=[
