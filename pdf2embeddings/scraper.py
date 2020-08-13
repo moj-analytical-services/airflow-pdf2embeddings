@@ -71,16 +71,21 @@ class DocumentScraper:
             pdf = open(os.path.join(self.pdf_folder, pdf_name), 'rb')
         else:
             pdf = s3fs.S3FileSystem().open(pdf_name, 'rb')  # no need to join with self.pdf_folder as s3fs includes that
-        pdf_reader = slate3k.PDF(pdf)
-        num_pages = len(pdf_reader)
-        for i, page in enumerate(pdf_reader):
-            logger.debug(f'Reading page {i+1} of PDF file {pdf_name}')
-            page_text = self._clean_text(page)
-            page_series = pd.Series(page_text)
-            document_series = document_series.append(page_series, ignore_index=True)
-        pdf.close()
-
-        return document_series, num_pages
+        try:    
+            pdf_reader = slate3k.PDF(pdf)
+        except Exception as err:
+            logger.error(f"The following file could not be parsed: {pdf}.\nThis error was generated: {err}.")
+            pdf.close()
+            return None
+        else:
+            num_pages = len(pdf_reader)
+            for i, page in enumerate(pdf_reader):
+                logger.debug(f'Reading page {i+1} of PDF file {pdf_name}')
+                page_text = self._clean_text(page)
+                page_series = pd.Series(page_text)
+                document_series = document_series.append(page_series, ignore_index=True)
+            pdf.close()
+            return document_series, num_pages
 
     def _clean_text(self, text: str) -> str:
         """
@@ -109,9 +114,11 @@ class DocumentScraper:
         logger.info('Starting scraping PDFs...')
         for i, file in enumerate(tqdm(sorted(pdf_list))):
             # sorted is so pdfs are extracted in alphabetic order, and to make testing more robust.
-            series, num_pages = self._text_to_series_of_pages(file)
-            logger.info(f"Reading PDF file {i + 1} out of {len(pdf_list)}: \"{file}\", number of pages: {num_pages}")
-            if isinstance(series, pd.Series):
-                series.rename(file.replace('.pdf', ''), inplace=True)
-                df = pd.concat([df, series], axis=1)
+            pdf_extract = self._text_to_series_of_pages(file)
+            if pdf_extract is not None:  # excluding case when PDF could not be parsed due to encoding errors (it happens occasionally)
+                series, num_pages = pdf_extract
+                logger.info(f"Reading PDF file {i + 1} out of {len(pdf_list)}: \"{file}\", number of pages: {num_pages}")
+                if isinstance(series, pd.Series):
+                    series.rename(file.replace('.pdf', ''), inplace=True)
+                    df = pd.concat([df, series], axis=1)
         return df
