@@ -26,7 +26,8 @@ class DocumentScraper:
             self, pdf_folder: str,
             json_filename: Optional[str] = None,
             from_s3_bucket: bool = False,
-            folder_for_unscraped_files: Optional[str] = None
+            folder_to_copy_scraped_files: Optional[str] = None,
+            folder_to_copy_unscraped_files: Optional[str] = None
     ) -> None:
         """
         :param pdf_folder: path to the folder containing pdf files to be scraped. Can also be an S3 bucket (see below).
@@ -35,15 +36,20 @@ class DocumentScraper:
                which case no ad-hoc text cleaning will be performed.
         :param from_s3_bucket: a boolean specifying whether to scrape the PDFs from a folder located in an AWS S3
                bucket. If set to True, the path can either start with "s3://" or omit this prefix. Default: False.
-        :param folder_for_unscraped_files: this folder gives the user the option for the unscraped files to be copied
-               over in a specified folder so they can be kept track of. This is because occasionally slate3k doesn't
-               manage to successfully scrape a file; this is very rare but we want to track what has not been
+        :param folder_to_copy_scraped_files: this folder gives the user the option for the successfully scraped files to
+               be copied over in a specific folder, so you can keep track of which files have been scraped. The files
+               will not be deleted from the original folder. This should contain full path to folder, including bucket
+               name if using S3.
+        :param folder_to_copy_unscraped_files: this folder gives the user the option for the unscraped files to be
+               copied over in a specified folder so they can be kept track of. This is because occasionally slate3k
+               doesn't manage to successfully scrape a file; this is very rare but we want to track what has not been
                successfully scraped. This should contain full path to folder, including bucket name if using S3.
         """
         self.pdf_folder = pdf_folder
         self.open_json = self._read_config(json_filename)
         self.from_s3_bucket = from_s3_bucket
-        self.folder_for_unscraped_files = folder_for_unscraped_files
+        self.folder_to_copy_scraped_files = folder_to_copy_scraped_files
+        self.folder_to_copy_unscraped_files = folder_to_copy_unscraped_files
 
         if self.from_s3_bucket:
             assert Session().get_credentials() is not None, "You do not have any valid credentials to access AWS S3."
@@ -87,23 +93,23 @@ class DocumentScraper:
         except Exception as err:
             logger.error(f"The following file could not be parsed: {pdf}.\nThis error was generated: {err}.")
             pdf.close()
-            if self.folder_for_unscraped_files is not None and not self.from_s3_bucket:
+            if self.folder_to_copy_unscraped_files is not None and not self.from_s3_bucket:
                 shutil.copy2(
-                    os.path.join(self.pdf_folder, pdf_name), os.path.join(self.folder_for_unscraped_files, pdf_name)
+                    os.path.join(self.pdf_folder, pdf_name), os.path.join(self.folder_to_copy_unscraped_files, pdf_name)
                 )
                 logger.warning(
-                    f"File {pdf_name} copied to '{os.path.join(self.folder_for_unscraped_files, pdf_name)}'."
+                    f"File {pdf_name} copied to '{os.path.join(self.folder_to_copy_unscraped_files, pdf_name)}'."
                 )
-            elif self.folder_for_unscraped_files is not None and self.from_s3_bucket:
+            elif self.folder_to_copy_unscraped_files is not None and self.from_s3_bucket:
                 s3_resource = resource('s3')
                 s3_resource.Object(
-                    self.folder_for_unscraped_files.split("/", 1)[0],  # bucket name
-                    os.path.join(self.folder_for_unscraped_files.split("/", 1)[1], pdf_name.split("/")[-1])
+                    self.folder_to_copy_unscraped_files.split("/", 1)[0],  # bucket name
+                    os.path.join(self.folder_to_copy_unscraped_files.split("/", 1)[1], pdf_name.split("/")[-1])
                     # path to pdf file excluding bucket name; this allows for peculiarity of how s3fs handles names
                 ).copy_from(CopySource=pdf_name)
                 logger.warning(
                     f"File {pdf_name.split('/')[-1]} copied to "
-                    f"'{os.path.join(self.folder_for_unscraped_files, pdf_name.split('/')[-1])}'."
+                    f"'{os.path.join(self.folder_to_copy_unscraped_files, pdf_name.split('/')[-1])}'."
                 )
             return None
         else:
@@ -114,6 +120,24 @@ class DocumentScraper:
                 page_series = pd.Series(page_text)
                 document_series = document_series.append(page_series, ignore_index=True)
             pdf.close()
+            if self.folder_to_copy_scraped_files is not None and not self.from_s3_bucket:
+                shutil.copy2(
+                    os.path.join(self.pdf_folder, pdf_name), os.path.join(self.folder_to_copy_scraped_files, pdf_name)
+                )
+                logger.info(
+                    f"File {pdf_name} copied to '{os.path.join(self.folder_to_copy_scraped_files, pdf_name)}'."
+                )
+            elif self.folder_to_copy_scraped_files is not None and self.from_s3_bucket:
+                s3_resource = resource('s3')
+                s3_resource.Object(
+                    self.folder_to_copy_scraped_files.split("/", 1)[0],  # bucket name
+                    os.path.join(self.folder_to_copy_scraped_files.split("/", 1)[1], pdf_name.split("/")[-1])
+                    # path to pdf file excluding bucket name; this allows for peculiarity of how s3fs handles names
+                ).copy_from(CopySource=pdf_name)
+                logger.info(
+                    f"File {pdf_name.split('/')[-1]} copied to "
+                    f"'{os.path.join(self.folder_to_copy_scraped_files, pdf_name.split('/')[-1])}'."
+                )
             return document_series, num_pages
 
     def _clean_text(self, text: str) -> str:
