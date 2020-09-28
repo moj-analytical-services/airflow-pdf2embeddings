@@ -27,7 +27,8 @@ class DocumentScraper:
             json_filename: Optional[str] = None,
             from_s3_bucket: bool = False,
             folder_to_copy_scraped_files: Optional[str] = None,
-            folder_to_copy_unscraped_files: Optional[str] = None
+            folder_to_copy_unscraped_files: Optional[str] = None,
+            delete_original_pdfs_after_copy: bool = False
     ) -> None:
         """
         :param pdf_folder: path to the folder containing pdf files to be scraped. Can also be an S3 bucket (see below).
@@ -44,12 +45,16 @@ class DocumentScraper:
                copied over in a specified folder so they can be kept track of. This is because occasionally slate3k
                doesn't manage to successfully scrape a file; this is very rare but we want to track what has not been
                successfully scraped. This should contain full path to folder, including bucket name if using S3.
+        :param delete_original_pdfs_after_copy: if set to True, and if folder_to_copy_scraped_files and
+               folder_to_copy_unscraped_files have been explicitly specified, it deletes the original PDF file after
+               having copied it to the new folder. Default: False.
         """
         self.pdf_folder = pdf_folder
         self.open_json = self._read_config(json_filename)
         self.from_s3_bucket = from_s3_bucket
         self.folder_to_copy_scraped_files = folder_to_copy_scraped_files
         self.folder_to_copy_unscraped_files = folder_to_copy_unscraped_files
+        self.delete_original_pdfs_after_copy = delete_original_pdfs_after_copy
 
         if self.from_s3_bucket:
             assert Session().get_credentials() is not None, "You do not have any valid credentials to access AWS S3."
@@ -76,11 +81,11 @@ class DocumentScraper:
         with open(json_filename, 'r') as file:
             return json.load(file)
 
-    def _text_to_series_of_pages(self, pdf_name: str) -> Tuple[pd.Series, int]:
+    def _text_to_series_of_pages(self, pdf_name: str) -> Optional[Tuple[pd.Series, int]]:
         """
         :param pdf_name: full name of pdf (including .pdf extension) to be scraped and converted into a pd.Series
         :return: document_series: a pd.Series where each row contains the text of one pdf page.
-                 num_pages: int, the number of pages of the input pdf file
+                 num_pages: int, the number of pages of the input pdf file. If no PDFs were scraped, it returns None.
         """
         assert pdf_name.endswith('.pdf'), 'Input file is not in .pdf format. The file cannot be processed.'
         document_series = pd.Series()
@@ -100,6 +105,9 @@ class DocumentScraper:
                 logger.warning(
                     f"File {pdf_name} copied to '{os.path.join(self.folder_to_copy_unscraped_files, pdf_name)}'."
                 )
+                if self.delete_original_pdfs_after_copy:
+                    os.remove(os.path.join(self.pdf_folder, pdf_name))
+                    logger.warning(f"File {pdf_name} deleted from its original folder.")
             elif self.folder_to_copy_unscraped_files is not None and self.from_s3_bucket:
                 s3_resource = resource('s3')
                 s3_resource.Object(
@@ -111,6 +119,13 @@ class DocumentScraper:
                     f"File {pdf_name.split('/')[-1]} copied to "
                     f"'{os.path.join(self.folder_to_copy_unscraped_files, pdf_name.split('/')[-1])}'."
                 )
+                if self.delete_original_pdfs_after_copy:
+                    s3_resource.Object(
+                        pdf_name.split("/", 1)[0],  # bucket name
+                        pdf_name.split("/", 1)[1]
+                        # path to pdf file excluding bucket name; this allows for peculiarity of how s3fs handles names
+                    ).delete()
+                    logger.warning(f"File {pdf_name.split('/')[-1]} deleted from its original folder.")
             return None
         else:
             num_pages = len(pdf_reader)
@@ -127,6 +142,9 @@ class DocumentScraper:
                 logger.info(
                     f"File {pdf_name} copied to '{os.path.join(self.folder_to_copy_scraped_files, pdf_name)}'."
                 )
+                if self.delete_original_pdfs_after_copy:
+                    os.remove(os.path.join(self.pdf_folder, pdf_name))
+                    logger.warning(f"File {pdf_name} deleted from its original folder.")
             elif self.folder_to_copy_scraped_files is not None and self.from_s3_bucket:
                 s3_resource = resource('s3')
                 s3_resource.Object(
@@ -138,6 +156,13 @@ class DocumentScraper:
                     f"File {pdf_name.split('/')[-1]} copied to "
                     f"'{os.path.join(self.folder_to_copy_scraped_files, pdf_name.split('/')[-1])}'."
                 )
+                if self.delete_original_pdfs_after_copy:
+                    s3_resource.Object(
+                        pdf_name.split("/", 1)[0],  # bucket name
+                        pdf_name.split("/", 1)[1]
+                        # path to pdf file excluding bucket name; this allows for peculiarity of how s3fs handles names
+                    ).delete()
+                    logger.warning(f"File {pdf_name.split('/')[-1]} deleted from its original folder.")
             return document_series, num_pages
 
     def _clean_text(self, text: str) -> str:
