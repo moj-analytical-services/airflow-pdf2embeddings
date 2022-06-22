@@ -28,7 +28,7 @@ setup(
         "boto3~=1.10.34",
         "gensim==3.8.1",
         "nltk==3.4.5",
-        "numpy==1.18.2",
+        "numpy==1.22.0",
         "pandas==0.25.3",
         "ply==3.11",
         "pyarrow==0.16.0",
